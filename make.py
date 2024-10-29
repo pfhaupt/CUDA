@@ -6,7 +6,7 @@ RAYLIB_LIBS = [
     "-I.\\src\\raylib-windows\\include", "-lraylib", "-L.\\src\\raylib-windows\\lib",
     "-lOpenGL32", "-lmsvcrt", "-lGdi32", "-lWinMM", "-lkernel32", "-lshell32", "-lUser32",
     "-Xlinker", "/NODEFAULTLIB:LIBCMT",
-] if os.name == "WIN" else [
+] if os.name == "nt" else [
     "-I./src/raylib-linux/include/", "-l:libraylib.a", "-L./src/raylib-linux/lib/",
 ]
 

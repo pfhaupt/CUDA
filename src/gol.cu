@@ -6,8 +6,8 @@
 
 #include "raylib.h"
 
-#define WIDTH 1920
-#define HEIGHT 1080
+#define WIDTH 3840
+#define HEIGHT 2160
 
 #define cast(x, typ) (*((typ*)&(x)))
 
@@ -68,7 +68,7 @@ int main() {
     SetTargetFPS(60);
     SetConfigFlags(FLAG_FULLSCREEN_MODE);
 
-    for (int i = 0; i < WIDTH * HEIGHT; i++) first[i] = (gpuType)(rand() % 2);
+    for (int i = 0; i < WIDTH * HEIGHT; i++) first[i] = (gpuType)((rand() * 12390123) % 2);
     copyHostToDevice(d_before, first, WIDTH * HEIGHT);
 
     invokeKernel(mandel, 4096, 1024, d_pixels, d_before, d_after, WIDTH, HEIGHT);

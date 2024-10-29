@@ -1,4 +1,1 @@
-*.exe
-*.exp
-*.lib
 build/
