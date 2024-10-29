@@ -3,7 +3,11 @@
 #include "nob.h"
 
 #ifdef DEBUG
-#define PRINT_DEBUG(fmt, ...) printf("[DEBUG] "fmt, __VA_ARGS__);
+#define PRINT_DEBUG(fmt, ...) \
+    do { \
+        printf("[DEBUG] "); \
+        printf(fmt, __VA_ARGS__); \
+    } while (0);
 #else
 #define PRINT_DEBUG(...)
 #endif // DEBUG
@@ -102,8 +106,11 @@
     } \
     free(device_ptrs.items); \
 
+#ifndef ELEM_TYPE
+#define ELEM_TYPE int
+#endif
 typedef struct List {
-    int **items;
+    ELEM_TYPE **items;
     int count;
     int capacity;
 } List;
