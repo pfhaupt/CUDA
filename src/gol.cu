@@ -1,5 +1,3 @@
-// nvcc mandel.cu -std=c++17 -I.\raylib\include -lraylib -L.\raylib\lib -lOpenGL32 -lmsvcrt -lGdi32 -lWinMM -lkernel32 -lshell32 -lUser32 -Xlinker /NODEFAULTLIB:LIBCMT -O3 && a.exe
-
 // #define DEBUG
 #define ELEM_TYPE int
 #include "common.h"
@@ -39,7 +37,7 @@ __device__ int getNeighbors(gpuType *grid, int x, int y, int w, int h) {
     return cnt;
 }
 
-__global__ void mandel(int *pixels, gpuType *before, gpuType *after, int width, int height) {
+__global__ void gol(int *pixels, gpuType *before, gpuType *after, int width, int height) {
     const int N = width * height;
     for (int id = blockIdx.x * blockDim.x + threadIdx.x;
         id < N; id += blockDim.x * gridDim.x) {
@@ -71,7 +69,7 @@ int main() {
     for (int i = 0; i < WIDTH * HEIGHT; i++) first[i] = (gpuType)((rand() * 12390123) % 2);
     copyHostToDevice(d_before, first, WIDTH * HEIGHT);
 
-    invokeKernel(mandel, 4096, 1024, d_pixels, d_before, d_after, WIDTH, HEIGHT);
+    invokeKernel(gol, 4096, 1024, d_pixels, d_before, d_after, WIDTH, HEIGHT);
     copyDeviceToHost(pixels, d_pixels, WIDTH * HEIGHT);
     Image img = {
         pixels,
@@ -95,9 +93,9 @@ int main() {
             long long int ns;
             TIME_AND_BIND(ns,
                 if (swapped) {
-                    invokeKernel(mandel, 4096, 1024, d_pixels, d_before, d_after, WIDTH, HEIGHT);
+                    invokeKernel(gol, 4096, 1024, d_pixels, d_before, d_after, WIDTH, HEIGHT);
                 } else {
-                    invokeKernel(mandel, 4096, 1024, d_pixels, d_after, d_before, WIDTH, HEIGHT);
+                    invokeKernel(gol, 4096, 1024, d_pixels, d_after, d_before, WIDTH, HEIGHT);
                 }
                 ENSURE(cudaStreamSynchronize(0), "Could not synchronize Stream")
             );
