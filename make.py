@@ -17,6 +17,7 @@ def call_cmd(cmd: List[str]) -> int:
 def call_and_catch(cmd: List[str], err_msg: str):
     code = call_cmd(cmd)
     if code != 0:
+        print("[ERROR] Command exited with code", code)
         print(err_msg)
         exit(code)
 
@@ -37,7 +38,7 @@ def compile(prog: str, proj: str, nvcc_args: str, raylib: bool = True):
     if len(_args) != 0:
         cmd.extend(_args)
     cmd.extend(["-o", f"./build/{proj}"])
-    if proj not in ["moving", "mandel", "gol"]:
+    if proj not in ["moving", "mandelbrot", "gol", "mandelbulb"]:
         print(f"error: Can't compile unknown project `{proj}`.")
         print_usage_and_exit(prog)
     if raylib:

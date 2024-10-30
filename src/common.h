@@ -110,7 +110,7 @@
 #define ELEM_TYPE int
 #endif
 typedef struct List {
-    ELEM_TYPE **items;
+    void **items;
     int count;
     int capacity;
 } List;

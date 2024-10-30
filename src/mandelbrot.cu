@@ -1,5 +1,3 @@
-// nvcc mandel.cu -std=c++17 -I.\raylib\include -lraylib -L.\raylib\lib -lOpenGL32 -lmsvcrt -lGdi32 -lWinMM -lkernel32 -lshell32 -lUser32 -Xlinker /NODEFAULTLIB:LIBCMT -O3 && a.exe
-
 // #define DEBUG
 #include "common.h"
 
