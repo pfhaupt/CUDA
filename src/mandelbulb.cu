@@ -13,8 +13,120 @@
 #define cast(x, typ) (*((typ*)&(x)))
 
 #define map(val, from, to, low, high) (low + (val - from) / (to - from) * (high - low))
+#define lerp(low, high, perc) ((int)(low + (high - low) * perc))
 
 typedef float gpuType;
+
+__device__ static unsigned int colors[79] = {
+    0xffff0000,
+    0xffff0027,
+    0xffff0046,
+    0xffff145e,
+    0xffff2472,
+    0xffff2e85,
+    0xffff3597,
+    0xffff3aa9,
+    0xffff3dbd,
+    0xffff3cd3,
+    0xffff35ee,
+    0xffff34ff,
+    0xffe869ff,
+    0xffd083ff,
+    0xffba93ff,
+    0xffa6a0ff,
+    0xff92a9ff,
+    0xff7eb1ff,
+    0xff67b7ff,
+    0xff4abcff,
+    0xff17c1ff,
+    0xff00c5ff,
+    0xff00c8ff,
+    0xff00caff,
+    0xff00ccfb,
+    0xff00cef6,
+    0xff00d0f2,
+    0xff00d3ee,
+    0xff00d5e9,
+    0xff00d8e3,
+    0xff00dbdc,
+    0xff00dfd3,
+    0xff00e3c9,
+    0xff00e7bd,
+    0xff00ebaf,
+    0xff00ef9f,
+    0xff00f48b,
+    0xff00f970,
+    0xff00fe45,
+    0xff00fe45,
+    0xff00f970,
+    0xff00f48b,
+    0xff00ef9f,
+    0xff00ebaf,
+    0xff00e7bd,
+    0xff00e3c9,
+    0xff00dfd3,
+    0xff00dbdc,
+    0xff00d8e3,
+    0xff00d5e9,
+    0xff00d3ee,
+    0xff00d0f2,
+    0xff00cef6,
+    0xff00ccfb,
+    0xff00caff,
+    0xff00c8ff,
+    0xff00c5ff,
+    0xff17c1ff,
+    0xff4abcff,
+    0xff67b7ff,
+    0xff7eb1ff,
+    0xff92a9ff,
+    0xffa6a0ff,
+    0xffba93ff,
+    0xffd083ff,
+    0xffe869ff,
+    0xffff34ff,
+    0xffff35ee,
+    0xffff3cd3,
+    0xffff3dbd,
+    0xffff3aa9,
+    0xffff3597,
+    0xffff2e85,
+    0xffff2472,
+    0xffff145e,
+    0xffff0046,
+    0xffff0027,
+    0xffff0000,
+    0xff000000,
+};
+__device__ const int colorCount = sizeof(colors) / sizeof(colors[0]);
+
+__device__ const float percPerColor = 1 / (float)(colorCount - 1);
+
+__device__ int lerpColor(int low, int high, float perc) {
+    int r1 = (low >> 16) & 0xFF;
+    int g1 = (low >> 8) & 0xFF;
+    int b1 = (low >> 0) & 0xFF;
+    int r2 = (high >> 16) & 0xFF;
+    int g2 = (high >> 8) & 0xFF;
+    int b2 = (high >> 0) & 0xFF;
+    int lr = lerp(r1, r2, perc) & 0xFF;
+    int lg = lerp(g1, g2, perc) & 0xFF;
+    int lb = lerp(b1, b2, perc) & 0xFF;
+    return 0xFF << 24 | lr << 16 | lg << 8 | lb;
+}
+
+__device__ int getColor(float perc) {
+    assert(0 <= perc && perc <= 1);
+    if (perc == 1) return colors[colorCount - 1];
+    int lowerIndex = floor(perc / percPerColor);
+    int upperIndex = ceil(perc / percPerColor);
+    assert(lowerIndex >= 0);
+    assert(upperIndex < colorCount);
+    if (lowerIndex == upperIndex) return colors[lowerIndex];
+    assert(lowerIndex == upperIndex - 1);
+    float relPerc = (perc - (lowerIndex * percPerColor)) / percPerColor;
+    return lerpColor(colors[lowerIndex], colors[upperIndex], relPerc);
+}
 
 __device__ int compute(gpuType posx, gpuType posy, gpuType posz, int maxIter) {
     gpuType zx = posx;
@@ -28,10 +140,13 @@ __device__ int compute(gpuType posx, gpuType posy, gpuType posz, int maxIter) {
         gpuType rn = __powf(r, n);
         gpuType phi = atan2f(zy, zx);
         gpuType theta = acosf(zz / r);
-        gpuType sinTheta = __sinf(n * theta);
-        gpuType cosTheta = __cosf(n * theta);
-        gpuType sinPhi = __sinf(n * phi);
-        gpuType cosPhi = __cosf(n * phi);
+        gpuType sinTheta, cosTheta, sinPhi, cosPhi;
+        __sincosf(n * theta, &sinTheta, &cosTheta);
+        __sincosf(n * phi, &sinPhi, &cosPhi);
+        // gpuType sinTheta = __sinf(n * theta);
+        // gpuType cosTheta = __cosf(n * theta);
+        // gpuType sinPhi = __sinf(n * phi);
+        // gpuType cosPhi = __cosf(n * phi);
         gpuType nx = rn * sinTheta * cosPhi;
         gpuType ny = rn * sinTheta * sinPhi;
         gpuType nz = rn * cosTheta;
@@ -95,18 +210,8 @@ __device__ int color(gpuType *info, float totalIter, float totalDepth) {
     int maxDepth = cast(info[13], int);
     float scaledIter = totalIter / AA_PER_PIXEL;
     float scaledDepth = totalDepth / AA_PER_PIXEL;
-    int color;
-    if (maxDepth == 1)
-    	color = (int)map(scaledIter, 0, (float)maxIter, 0, 255);
-    else
-        color = (int)map(scaledDepth, 0, (float)maxDepth, 0, 255);
-    int gray = color << 16 | color << 8 | color;
-    return 0xFF << 24 | gray;
-//     float _iter = (float)iter;
-//     float lIter = __log2f(_iter);
-//     float mIter = __log2f((float)maxIter);
-//     float _color = map(lIter, 0, mIter, 0, 255);
-//     int color = (int)_color;
+    float perc = maxDepth == 1 ? scaledIter / (float)maxIter : 1 - scaledDepth / (float)maxDepth;
+    return getColor(perc);
 }
 
 __global__ void mandel(gpuType *screen, int *pixels) {
@@ -202,9 +307,9 @@ int main() {
     Vector3 ej = {0, 1, 0};
     Vector3 ek = {0, 0, 1};
     float dimScale = 0.01;
-    float velScale = 0.01;
     float lastExecTime = 0;
     bool firstFrame = true;
+    bool showText = true;
     while (!WindowShouldClose()) {
         float alpha = 0.01;
         bool screenUpdated = firstFrame;
@@ -255,11 +360,11 @@ int main() {
             screenUpdated = true;
         }
         if (IsKeyDown(KEY_UP)) {
-            position = Vector3Add(position, Vector3Scale(ek, velScale));
+            position = Vector3Add(position, Vector3Scale(ek, dimScale));
             screenUpdated = true;
         }
         if (IsKeyDown(KEY_DOWN)) {
-            position = Vector3Sub(position, Vector3Scale(ek, velScale));
+            position = Vector3Sub(position, Vector3Scale(ek, dimScale));
             screenUpdated = true;
         }
         if (IsKeyDown(KEY_Z)) {
@@ -276,7 +381,6 @@ int main() {
             ej = {0, 1, 0};
             ek = {0, 0, 1};
             dimScale = 0.01;
-            velScale = 0.01;
             resetInfo(info);
             screenUpdated = true;
         }
@@ -287,7 +391,6 @@ int main() {
             else it = nw;
             if (it < 10) {
                 it = 10;
-                TraceLog(LOG_WARNING, "Minimum iteration count is capped to 10.");
             } else {
                 info[12] = cast(it, gpuType);
                 screenUpdated = true;
@@ -326,6 +429,7 @@ int main() {
             info[13] = cast(depth, gpuType);
             screenUpdated = true;
         }
+        if (IsKeyReleased(KEY_TAB)) showText = !showText;
         if (screenUpdated) {
             // Step X
             info[3] = ei.x * dimScale;
@@ -355,14 +459,17 @@ int main() {
             texture = LoadTextureFromImage(img);
         }
         BeginDrawing();
+        ClearBackground(BLACK);
         DrawTexture(texture, 0, 0, WHITE);
-        DrawText(TextFormat("Center: (%.12f, %.12f, %.12f)", position.x, position.y, position.z), 50, 50, 50, BLUE);
-        DrawText(TextFormat("ei: (%.12f, %.12f, %.12f, %.12f)", ei.x, ei.y, ei.z, Vector3Length(ei)), 50, 100, 50, BLUE);
-        DrawText(TextFormat("ej: (%.12f, %.12f, %.12f, %.12f)", ej.x, ej.y, ej.z, Vector3Length(ej)), 50, 150, 50, BLUE);
-        DrawText(TextFormat("ek: (%.12f, %.12f, %.12f, %.12f)", ek.x, ek.y, ek.z, Vector3Length(ek)), 50, 200, 50, BLUE);
-        DrawText(TextFormat("Kernel took: %.6f ms", lastExecTime), 50, 250, 50, BLUE);
-        DrawText(TextFormat("Iterations: %d", cast(info[12], int)), 50, 300, 50, BLUE);
-        DrawText(TextFormat("Depth: %d", cast(info[13], int)), 50, 350, 50, BLUE);
+        if (showText) {
+            DrawText(TextFormat("Center: (%.12f, %.12f, %.12f)", position.x, position.y, position.z), 50, 50, 50, BLUE);
+            DrawText(TextFormat("ei: (%.12f, %.12f, %.12f, %.12f)", ei.x, ei.y, ei.z, Vector3Length(ei)), 50, 100, 50, BLUE);
+            DrawText(TextFormat("ej: (%.12f, %.12f, %.12f, %.12f)", ej.x, ej.y, ej.z, Vector3Length(ej)), 50, 150, 50, BLUE);
+            DrawText(TextFormat("ek: (%.12f, %.12f, %.12f, %.12f)", ek.x, ek.y, ek.z, Vector3Length(ek)), 50, 200, 50, BLUE);
+            DrawText(TextFormat("Kernel took: %.6f ms", lastExecTime), 50, 250, 50, BLUE);
+            DrawText(TextFormat("Iterations: %d", cast(info[12], int)), 50, 300, 50, BLUE);
+            DrawText(TextFormat("Depth: %d", cast(info[13], int)), 50, 350, 50, BLUE);
+        }
         EndDrawing();
     }
 
