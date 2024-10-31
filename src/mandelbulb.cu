@@ -322,9 +322,9 @@ int main() {
             screenUpdated = true;
         }
         if (IsKeyDown(KEY_S)) {
-            alpha = -alpha;
-            Vector3 ej1 = Vector3Add(Vector3Scale(ej, cos(alpha)), Vector3Scale(ek, sin(alpha)));
-            Vector3 ek1 = Vector3Add(Vector3Scale(ek, cos(alpha)), Vector3Scale(ej, -sin(alpha)));
+            float alpha1 = -alpha;
+            Vector3 ej1 = Vector3Add(Vector3Scale(ej, cos(alpha1)), Vector3Scale(ek, sin(alpha1)));
+            Vector3 ek1 = Vector3Add(Vector3Scale(ek, cos(alpha1)), Vector3Scale(ej, -sin(alpha1)));
             ej = ej1;
             ek = ek1;
             screenUpdated = true;
@@ -337,9 +337,9 @@ int main() {
             screenUpdated = true;
         }
         if (IsKeyDown(KEY_D)) {
-            alpha = -alpha;
-            Vector3 ei1 = Vector3Add(Vector3Scale(ei, cos(alpha)), Vector3Scale(ek, -sin(alpha)));
-            Vector3 ek1 = Vector3Add(Vector3Scale(ek, cos(alpha)), Vector3Scale(ei, sin(alpha)));
+            float alpha1 = -alpha;
+            Vector3 ei1 = Vector3Add(Vector3Scale(ei, cos(alpha1)), Vector3Scale(ek, -sin(alpha1)));
+            Vector3 ek1 = Vector3Add(Vector3Scale(ek, cos(alpha1)), Vector3Scale(ei, sin(alpha1)));
             ei = ei1;
             ek = ek1;
             screenUpdated = true;
@@ -352,9 +352,9 @@ int main() {
             screenUpdated = true;
         }
         if (IsKeyDown(KEY_Q)) {
-            alpha = -alpha;
-            Vector3 ei1 = Vector3Add(Vector3Scale(ei, cos(alpha)), Vector3Scale(ej, sin(alpha)));
-            Vector3 ej1 = Vector3Add(Vector3Scale(ej, cos(alpha)), Vector3Scale(ei, -sin(alpha)));
+            float alpha1 = -alpha;
+            Vector3 ei1 = Vector3Add(Vector3Scale(ei, cos(alpha1)), Vector3Scale(ej, sin(alpha1)));
+            Vector3 ej1 = Vector3Add(Vector3Scale(ej, cos(alpha1)), Vector3Scale(ei, -sin(alpha1)));
             ei = ei1;
             ej = ej1;
             screenUpdated = true;
