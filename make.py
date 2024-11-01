@@ -10,6 +10,8 @@ RAYLIB_LIBS = [
     "-I./src/raylib-linux/include/", "-l:libraylib.a", "-L./src/raylib-linux/lib/",
 ]
 
+PROJECTS = ["moving", "mandelbrot", "gol", "mandelbulb", "balls"]
+
 def call_cmd(cmd: List[str]) -> int:
     print("[CMD] " + " ".join(cmd))
     return subprocess.call(cmd)
@@ -38,7 +40,7 @@ def compile(prog: str, proj: str, nvcc_args: str, raylib: bool = True):
     if len(_args) != 0:
         cmd.extend(_args)
     cmd.extend(["-o", f"./build/{proj}"])
-    if proj not in ["moving", "mandelbrot", "gol", "mandelbulb"]:
+    if proj not in PROJECTS:
         print(f"error: Can't compile unknown project `{proj}`.")
         print_usage_and_exit(prog)
     if raylib:
