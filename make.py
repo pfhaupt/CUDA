@@ -40,6 +40,8 @@ def compile(prog: str, proj: str, nvcc_args: str, raylib: bool = True):
     if len(_args) != 0:
         cmd.extend(_args)
     cmd.extend(["-o", f"./build/{proj}"])
+    if not os.path.exists('./build'):
+        os.makedirs('./build')
     if proj not in PROJECTS:
         print(f"error: Can't compile unknown project `{proj}`.")
         print_usage_and_exit(prog)
