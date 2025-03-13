@@ -25,7 +25,7 @@ typedef struct{
 }DD;
 
 // SCALE is 2^(mantissabits/2)+1 = 2^(24/2)+1 = 4097
-const float SCALE = 4097;
+__device__ const float SCALE = 4097;
 
 // float -> DD
 __device__ DD dd_split(float a){
